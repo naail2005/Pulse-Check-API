@@ -144,7 +144,9 @@ Stops the countdown completely — no alert can fire while paused. Calling `/hea
 
 ---
 
-## 4. Developer's Choice: Structured Alert Audit Log
+## 4. Developer's Choice
+
+### Structured Alert Audit Log
 
 **What:** In addition to `console.log`-ing an alert, every failure event is also appended as a JSON line to `alerts.log` (via `fs.appendFile`, so it doesn't block the request-handling event loop).
 
@@ -154,4 +156,10 @@ Example `alerts.log` contents:
 ```json
 {"ALERT":"Device device-123 is down!","time":"2026-07-09T14:46:44.325Z"}
 ```
+
+### `GET /monitors` with `id`/`status` filtering
+
+**What:** A read endpoint that lists all monitors, or narrows the list to a single `id` and/or a `status` (`up`/`down`/`paused`).
+
+**Why:** The audit log above answers "what happened over time," but a support engineer's first question during an incident is usually "what's broken *right now*?" Without this endpoint, the only way to see a monitor's live status was to grep server console output. `GET /monitors?status=down` gives an instant, queryable snapshot of every device currently failing, and `GET /monitors?id=device-123` lets you check one device without scanning the whole list — the two features are complementary: one is history, the other is current state.
 
