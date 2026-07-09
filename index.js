@@ -1,24 +1,41 @@
 import express from "express";
+import fs from "fs";
 const app = express();
 
 app.use(express.json());
 
 const monitors = {};
 const timers = {};
+const ALERTS_LOG_PATH = "alerts.log";
 
 
 const FORBIDDEN_IDS = new Set(["__proto__", "constructor", "prototype"]);
 
-// user stroy 3 and timer function called in registring a monitor or reseting the timer on a device
+// developer's choice: audit trail of failure events for support engineers,
+// in addition to the console log, so alerts survive a process restart.
+function logAlert(alert) {
+  console.log(alert);
+  fs.appendFile(ALERTS_LOG_PATH, JSON.stringify(alert) + "\n", (err) => {
+    if (err) console.error("Failed to write to alerts.log:", err);
+  });
+}
+
+// user stroy 3 and timer function called in registering a monitor or reseting the timer on a device
 function startTimer(monitor) {
   clearTimeout(timers[monitor.id]);
-  timers[monitor.id] = setTimeout(() => {            
+  timers[monitor.id] = setTimeout(() => {
     monitor.status = "down";
     monitor.updatedAt = new Date().toISOString();
     console.log({
+        ALERT: `Device ${monitor.id} is down!`,
+        time: monitor.updatedAt,
+    });
+    
+    logAlert({
       ALERT: `Device ${monitor.id} is down!`,
       time: monitor.updatedAt,
     });
+
   }, monitor.timeout * 1000);
 }
 
@@ -78,5 +95,23 @@ app.post("/monitors/:id/heartbeat", (req, res) => {
 
   res.status(200).json({ message: `Heartbeat received for ${monitor.id}` });
 });
+
+//bonus user story (pausing a monitor)
+app.post("/monitors/:id/pause", (req, res) => {
+  const monitor = monitors[req.params.id];
+
+  if (!monitor) {
+    return res
+      .status(404)
+      .json({ message: `Monitor ${req.params.id} not found` });
+  }
+
+  clearTimeout(timers[monitor.id]);
+  monitor.status = "paused";
+  monitor.updatedAt = new Date().toISOString();
+
+  res.status(200).json({ message: `Monitor ${monitor.id} paused` });
+});
+
 
 app.listen(3000, () => console.log("Server running on port 3000"));
