@@ -1,0 +1,26 @@
+{
+  "name": "pulse-check-api",
+  "version": "1.0.0",
+  "description": "A dead man's switch REST API that tracks device heartbeats and fires an alert when a device stops checking in.",
+  "homepage": "https://github.com/naail2005/Pulse-Check-API#readme",
+  "bugs": {
+    "url": "https://github.com/naail2005/Pulse-Check-API/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/naail2005/Pulse-Check-API.git"
+  },
+  "license": "ISC",
+  "author": "Naa-il Baba",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon index"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
