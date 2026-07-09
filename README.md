@@ -59,6 +59,29 @@ The server listens on `http://localhost:3000`. There is no database or `.env` co
 
 All request/response bodies are JSON. All timestamps are ISO-8601 strings.
 
+### `GET /monitors` — List monitors, with optional filtering
+
+Supports two optional query params, combinable with AND semantics:
+
+| Query param | Notes                                                                 |
+|-------------|------------------------------------------------------------------------|
+| `id`        | Exact match. Returns `[]` if no monitor has that id.                   |
+| `status`    | One of `up`, `down`, `paused`. `400` if any other value is passed.     |
+
+```
+GET /monitors                          → all monitors
+GET /monitors?status=down              → only monitors currently down
+GET /monitors?id=device-123            → just that monitor (or [])
+GET /monitors?id=device-123&status=up  → that monitor, only if its status is "up"
+```
+
+```json
+// 200
+[
+  { "id": "device-123", "timeout": 60, "createdAt": "...", "updatedAt": "...", "status": "up" }
+]
+```
+
 ### `POST /monitors` — Register a monitor (User Story 1)
 
 **Request body:**
@@ -132,10 +155,3 @@ Example `alerts.log` contents:
 {"ALERT":"Device device-123 is down!","time":"2026-07-09T14:46:44.325Z"}
 ```
 
----
-
-## 5. Known Limitations
-
-- **In-memory only:** monitors and their timers live in a plain JS object and are lost on server restart — there is no persistence layer.
-- **No real email delivery:** `alert_email` is accepted and stored, but alerts are only logged to the console and `alerts.log`, not actually emailed.
-- **Single-process:** timers are plain `setTimeout` handles, so this won't scale horizontally across multiple server instances without moving timer state to a shared store.

@@ -10,6 +10,7 @@ const ALERTS_LOG_PATH = "alerts.log";
 
 
 const FORBIDDEN_IDS = new Set(["__proto__", "constructor", "prototype"]);
+const MONITOR_STATUSES = new Set(["up", "down", "paused"]);
 
 // developer's choice: audit trail of failure events for support engineers,
 // in addition to the console log, so alerts survive a process restart.
@@ -38,6 +39,31 @@ function startTimer(monitor) {
 
   }, monitor.timeout * 1000);
 }
+
+//fetch all monitors, optionally filtered by id (?id=) and/or status (?status=up|down|paused)
+app.get("/monitors", (req, res) => {
+  const { status, id } = req.query;
+
+  if (status !== undefined && !MONITOR_STATUSES.has(status)) {
+    return res.status(400).json({
+      message: `Invalid status filter. Must be one of: ${[...MONITOR_STATUSES].join(", ")}`,
+    });
+  }
+
+  let result;
+  if (id !== undefined) {
+    const monitor = monitors[id];
+    result = monitor ? [monitor] : [];
+  } else {
+    result = Object.values(monitors);
+  }
+
+  if (status !== undefined) {
+    result = result.filter((monitor) => monitor.status === status);
+  }
+
+  res.status(200).json(result);
+});
 
 //user story 1(registering a monitor)
 app.post("/monitors", (req, res) => {
